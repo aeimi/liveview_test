@@ -3,37 +3,31 @@ defmodule LiveviewTestWeb.PageLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    {:ok, assign(socket, query: "", results: %{})}
+    socket =
+      socket
+      |> assign(continent_options: ["Europe", "Asia"])
+      |> assign(country_options: [])
+
+    {:ok, socket}
   end
 
   @impl true
-  def handle_event("suggest", %{"q" => query}, socket) do
-    {:noreply, assign(socket, results: search(query), query: query)}
-  end
+  def handle_event("form_changed", %{"form" => form_params}, socket) do
+    %{
+      "continent" => continent
+    } = form_params
 
-  @impl true
-  def handle_event("search", %{"q" => query}, socket) do
-    case search(query) do
-      %{^query => vsn} ->
-        {:noreply, redirect(socket, external: "https://hexdocs.pm/#{query}/#{vsn}")}
+    countries =
+      case continent do
+        "Europe" -> ["Germany", "France", "Spain"]
+        "Asia" -> ["Japan", "China", "India"]
+        "" -> []
+      end
 
-      _ ->
-        {:noreply,
-         socket
-         |> put_flash(:error, "No dependencies found matching \"#{query}\"")
-         |> assign(results: %{}, query: query)}
-    end
-  end
+    socket =
+      socket
+      |> assign(country_options: countries)
 
-  defp search(query) do
-    if not LiveviewTestWeb.Endpoint.config(:code_reloader) do
-      raise "action disabled when not in development"
-    end
-
-    for {app, desc, vsn} <- Application.started_applications(),
-        app = to_string(app),
-        String.starts_with?(app, query) and not List.starts_with?(desc, ~c"ERTS"),
-        into: %{},
-        do: {app, vsn}
+    {:noreply, socket}
   end
 end
