@@ -1,0 +1,21 @@
+version: '3'
+
+services:
+  app:
+    build:
+      context: .
+      target: devenv
+    ports:
+      - "5000:5000"
+    volumes:
+      - type: bind
+        source: "."
+        target: "/app"
+    command: |
+      /bin/sh -c '
+      cd /app
+      mix do deps.get
+      ./entrypoint.sh development || /bin/sh
+      '
+    stdin_open: true
+    tty: true
